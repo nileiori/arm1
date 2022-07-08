@@ -1,0 +1,113 @@
+#ifndef __FRAME_ANALYSIS_H__
+#define __FRAME_ANALYSIS_H__
+
+#include "gd32f4xx.h"
+#include "insdef.h"
+
+
+
+#define RS422_FRAME_HEADER_L                  0xBD
+#define RS422_FRAME_HEADER_M                  0xDB
+#define RS422_FRAME_HEADER_H                  0x0B
+
+#define	RS422_FRAME_LENGTH	100
+
+typedef struct imu_data
+{
+	uint8_t syn_low;
+	uint8_t syn_high;
+	uint8_t accelX_l;
+	uint8_t accelX_h;
+	uint8_t accelY_l;
+	uint8_t accelY_h;
+	uint8_t accelZ_l;
+	uint8_t accelZ_h;
+	uint8_t gyroX_l;
+	uint8_t gyroX_h;
+	uint8_t gyroY_l;
+	uint8_t gyroY_h;
+	uint8_t gyroZ_l;
+	uint8_t gyroZ_h;
+	uint8_t roll_l;		
+	uint8_t roll_h;	
+	uint8_t pitch_l;
+    uint8_t pitch_h;		
+    uint8_t	azimuth_l;	
+    uint8_t	azimuth_h;
+    uint8_t	sensor_temp_l;	
+    uint8_t	sensor_temp_h;
+    uint8_t crc;
+}IMU_DATA_TypeDef;
+
+typedef enum poll_data_type
+{
+	locating_info_prec = 0,
+	speed_info_prec = 1,
+	pos_info_prec = 2,
+	dev_inter_temp = 22,
+	gps_status     = 32,
+	rotate_status = 33
+}POLL_DATA_TypeDef;
+
+typedef struct poll_data
+{
+    uint16_t	data1;
+    uint16_t 	data2;
+    uint16_t	data3;
+    uint32_t	gps_time;
+    uint8_t		type;
+} POLL_DATA, pPOLL_DATA;
+
+typedef union rs422_frame_define
+{
+    struct
+    {
+        uint8_t 			header[3];	//0xbd,0xdb,0x0b
+        short 			roll;		//横滚角
+        short 			pitch;		//俯仰角
+        short			azimuth;	//方位角
+        short 			gyroX;		//陀螺x轴
+        short 			gyroY;		//陀螺y轴
+        short			gyroZ;		//陀螺z轴
+        short 			accelX;		//加表x轴
+        short 			accelY;		//加表y轴
+        short			accelZ;		//加表z轴
+        short			latitude;	//纬度
+        short			longitude;	//经度
+        short			altitude;	//高度
+        short			speed_N;	//北向速度
+        short			speed_E;	//东向速度
+        short			speed_G;	//地向速度
+        uint8_t				status;
+        struct poll_data	poll_frame;
+        uint8_t				xor_verify1;
+        uint32_t			gps_week;
+        uint8_t				xor_verify2;
+
+    } data_stream;
+    uint8_t fpga_cache[RS422_FRAME_LENGTH];
+} RS422_FRAME_DEF, *pRS422_FRAME_DEF;
+
+typedef struct
+{
+	float accelGrp[3];
+	float gyroGrp[3];
+	float roll;
+	float pitch;
+	float azimuth;
+	float latitude;
+	float longitude;
+	float altitude;
+	float gps_sec;//周内秒
+}MIX_DATA_TypeDef;
+
+void frame_pack_and_send(uint8_t* pData, uint16_t dataLen);
+void frame_init(void);
+void frame_fill_gnss(uint8_t* pData, uint16_t dataLen);
+uint8_t frame_fill_imu(uint8_t* pData, uint16_t dataLen);
+
+MIX_DATA_TypeDef* frame_get_ptr(void);
+
+
+#endif
+
