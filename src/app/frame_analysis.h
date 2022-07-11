@@ -64,30 +64,43 @@ typedef __packed struct poll_data
     uint8_t		type;
 } POLL_DATA, *pPOLL_DATA;
 
+typedef union
+{
+	struct
+	{
+		uint8_t pos:1;
+		uint8_t spd:1;
+		uint8_t posture:1;
+		uint8_t courseAngle:1;
+		uint8_t hold:4;
+	}statusBits;
+	uint8_t dev_status;
+}DEV_StatusTypedef;
+
 typedef __packed struct
 {
-    uint8_t 		header[3];	//0xbd,0xdb,0x0b
-    short 			roll;		//横滚角
-    short 			pitch;		//俯仰角
-    short			azimuth;	//方位角
-    short 			gyroX;		//陀螺x轴
-    short 			gyroY;		//陀螺y轴
-    short			gyroZ;		//陀螺z轴
-    short 			accelX;		//加表x轴
-    short 			accelY;		//加表y轴
-    short			accelZ;		//加表z轴
-    long			latitude;	//纬度
-    long			longitude;	//经度
-    long			altitude;	//高度
-    short			vn;			//北向速度
-    short			ve;			//东向速度
-    short			vu;			//地向速度
-    uint8_t			status;
-    uint8_t			reserved[6];
-    POLL_DATA		poll_frame;
-    uint8_t			xor_verify1;
-    uint32_t		gps_week;
-    uint8_t			xor_verify2;
+    uint8_t 			header[3];	//0xbd,0xdb,0x0b
+    short 				roll;		//横滚角
+    short 				pitch;		//俯仰角
+    short				azimuth;	//方位角
+    short 				gyroX;		//陀螺x轴
+    short 				gyroY;		//陀螺y轴
+    short				gyroZ;		//陀螺z轴
+    short 				accelX;		//加表x轴
+    short 				accelY;		//加表y轴
+    short				accelZ;		//加表z轴
+    long				latitude;	//纬度
+    long				longitude;	//经度
+    long				altitude;	//高度
+    short				vn;			//北向速度
+    short				ve;			//东向速度
+    short				vu;			//地向速度
+    uint8_t				status;		//bit0:位置 bit1:速度 bit2:姿态 bit3:航向角 
+    uint8_t				reserved[6];
+    POLL_DATA			poll_frame;
+    uint8_t				xor_verify1;
+    uint32_t			gps_week;
+    uint8_t				xor_verify2;
 
 } DATA_STREAM;
 
@@ -126,7 +139,7 @@ COMMON_EXT IMU_PARSE_DATA_TypeDef imuParseData;
 
 //写数据到DRAM
 void frame_writeDram(void);
-void frame_pack_and_send(void* pData);
+void frame_pack_and_send(void* pData, void *gps);
 void frame_init(void);
 uint8_t frame_fill_imu(uint8_t* pData, uint16_t dataLen);
 

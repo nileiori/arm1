@@ -141,7 +141,7 @@ uint8_t frame_fill_imu(uint8_t* pData, uint16_t dataLen)
 
 
 //数据封包
-void frame_pack_and_send(void* pData)
+void frame_pack_and_send(void* pData, void *gps)
 {
 #define	Accel_Scale 	12
 #define	Rate_Scale 		300
@@ -153,7 +153,9 @@ void frame_pack_and_send(void* pData)
     uint8_t xor;
     static uint8_t pull_couter = 0;
     double temp;
+	//DEV_StatusTypedef status;
 	EXPORT_RESULT* result = (EXPORT_RESULT*)pData;
+	GPSDataTypeDef* gnss = (GPSDataTypeDef*)gps;
 	
     rs422_frame.data_stream.header[0] = RS422_FRAME_HEADER_L;
     rs422_frame.data_stream.header[1] = RS422_FRAME_HEADER_M;
@@ -180,7 +182,9 @@ void frame_pack_and_send(void* pData)
 	rs422_frame.data_stream.ve = (short)(result->ve / temp * Sensor_Scale);
 	rs422_frame.data_stream.vu = (short)(result->vu / temp * Sensor_Scale);
 
-	rs422_frame.data_stream.status = result->gnssstatus;
+	rs422_frame.data_stream.status = 0;
+	if((gnss->PositionType != 0)&&(gnss->PositionType != 0xff))rs422_frame.data_stream.status |= 0x1;
+	if(gnss->ResolveState == 0)rs422_frame.data_stream.status |= 0x4;
 
 	switch(pull_couter)
 	{

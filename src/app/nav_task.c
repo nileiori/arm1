@@ -6,7 +6,7 @@
 #include "drv_usart.h"
 #include "nav_task.h"
 #include "frame_analysis.h"
-//#include "gnss.h"
+#include "gnss.h"
 #include "drv_rtc.h"
 
 
@@ -155,7 +155,7 @@ void nav_task(void)
     if(xCommStatus)//串口发送至上位机
     {
         xCommStatus = 0;
-        frame_pack_and_send(&g_Export_Result);
+        frame_pack_and_send(&g_Export_Result, &hGPSData);
         frame_writeDram();
     }
 }

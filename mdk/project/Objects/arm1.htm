@@ -3,7 +3,7 @@
 <title>Static Call Graph - [.\Objects\arm1.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\Objects\arm1.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060750: Last Updated: Fri Jul 08 15:21:25 2022
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060750: Last Updated: Fri Jul 08 17:52:08 2022
 <BR><P>
 <H3>Maximum Stack Usage =       1344 bytes + Unknown(Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -2431,8 +2431,8 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[192]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;peripherals_init
 </UL>
 
-<P><STRONG><a name="[14f]"></a>frame_pack_and_send</STRONG> (Thumb, 1764 bytes, Stack size 48 bytes, frame_analysis.o(i.frame_pack_and_send))
-<BR><BR>[Stack]<UL><LI>Max Depth = 248<LI>Call Chain = frame_pack_and_send &rArr; __hardfp_log &rArr; __kernel_poly &rArr; __aeabi_dmul &rArr; _double_epilogue &rArr; _double_round
+<P><STRONG><a name="[14f]"></a>frame_pack_and_send</STRONG> (Thumb, 1818 bytes, Stack size 56 bytes, frame_analysis.o(i.frame_pack_and_send))
+<BR><BR>[Stack]<UL><LI>Max Depth = 256<LI>Call Chain = frame_pack_and_send &rArr; __hardfp_log &rArr; __kernel_poly &rArr; __aeabi_dmul &rArr; _double_epilogue &rArr; _double_round
 </UL>
 <BR>[Calls]<UL><LI><a href="#[bd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_f2d
 <LI><a href="#[80]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_dmul
@@ -2960,7 +2960,7 @@ Global Symbols
 <LI><a href="#[d0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;InsUpdate
 </UL>
 
-<P><STRONG><a name="[194]"></a>nav_task</STRONG> (Thumb, 88 bytes, Stack size 8 bytes, nav_task.o(i.nav_task))
+<P><STRONG><a name="[194]"></a>nav_task</STRONG> (Thumb, 90 bytes, Stack size 8 bytes, nav_task.o(i.nav_task))
 <BR><BR>[Stack]<UL><LI>Max Depth = 1344<LI>Call Chain = nav_task &rArr; Kalman_smooth &rArr; InterfaceKalman &rArr; InsUpdate &rArr; inav_log &rArr; rtc_update &rArr; str2time &rArr; __0sscanf &rArr; __vfscanf_char &rArr; __vfscanf &rArr; _scanf_real
 </UL>
 <BR>[Calls]<UL><LI><a href="#[152]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;frame_writeDram
