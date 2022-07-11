@@ -472,17 +472,17 @@ int main(void)
     dbg_periph_enable(DBG_WWDGT_HOLD);
 #endif
 #ifdef INS_USING_UART4_DMA0
-    Public_SetTestTimer(comm_handle, 10);
+    //Public_SetTestTimer(comm_handle, 10);
 #endif
-
+	
     while(1)
     {
         gnss_comm2_task();
         gnss_comm3_task();
         imu_comm5_task();
         nav_task();
-        //comm_handle();
-        TimerTaskScheduler();
+        comm_handle();
+        //TimerTaskScheduler();
     }
 }
 

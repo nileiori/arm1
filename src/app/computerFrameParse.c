@@ -2,7 +2,7 @@
 #include "data_convert.h"
 #include "serial.h"
 
-//#include "bsp_sys.h"
+#include "gnss.h"
 
 //INSDataTypeDef hINSData;
 //FPGA_FRAME_DEF hINSFPGAData;
@@ -155,6 +155,11 @@ void frameParse(uint8_t* pData, uint16_t len)
                     tData[2] = *(pDat + 10);
                     tData[3] = *(pDat + 11);
                     hSetting.gnssMechanicalMigration_z = hex2Float(tData);
+
+					gnss_set_leverArm(hSetting.gnssMechanicalMigration_x, 
+										hSetting.gnssMechanicalMigration_x, 
+										hSetting.gnssMechanicalMigration_x, 
+										0.0, 0.0, 0.0);
                 }
 
                 break;
@@ -232,8 +237,8 @@ void comm_handle(void)
 
     if(usart_rx_data.usart_rx_count)
     {
-        //frameParse(usart_rx_data.usart_rx_buffer, usart_rx_data.usart_rx_count);
-        gd32_usart_write(usart_rx_data.usart_rx_buffer, usart_rx_data.usart_rx_count);
+        frameParse(usart_rx_data.usart_rx_buffer, usart_rx_data.usart_rx_count);
+        //gd32_usart_write(usart_rx_data.usart_rx_buffer, usart_rx_data.usart_rx_count);
     }
 }
 

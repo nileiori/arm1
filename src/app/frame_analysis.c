@@ -185,7 +185,7 @@ void frame_pack_and_send(void* pData, void *gps)
 	rs422_frame.data_stream.status = 0;
 	if((gnss->PositionType != 0)&&(gnss->PositionType != 0xff))rs422_frame.data_stream.status |= 0x1;
 	if(gnss->ResolveState == 0)rs422_frame.data_stream.status |= 0x4;
-
+	//pull_couter = 3;
 	switch(pull_couter)
 	{
 		case 0:

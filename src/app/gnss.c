@@ -175,21 +175,22 @@ int GNSS_Cmd_Parser(char* pData)
     		||(0 == strncmp("$GPZDA", (char const *)pData, 6))
     		||(0 == strncmp("$GLZDA", (char const *)pData, 6)))
     {
-	    gnssSynFlg |= (0x1 << 1);
+	    //gnssSynFlg |= (0x1 << 1);
 	    gCmdTypeIndex = 4;
     }
     else if(0 == strncmp("#HEADINGA", (char const *)pData, 9))
     {
-	    gnssSynFlg |= (0x1 << 2);
+	    gnssSynFlg |= (0x1 << 1);
 	    gCmdTypeIndex = 5;
     }
     else if(0 == strncmp("#BESTPOSA", (char const *)pData, 9))
     {
-	    //gnssSynFlg |= (0x1 << 4);
+	    //gnssSynFlg |= (0x1 << 3);
 	    gCmdTypeIndex = 6;
     }
     else if(0 == strncmp("#BESTVELA", (char const *)pData, 9))
     {
+    	gnssSynFlg |= (0x1 << 2);
     	gCmdTypeIndex = 7;
     }
     else if((0 == strncmp("$GNTRA", (char const *)pData, 6))
@@ -1036,9 +1037,9 @@ int gnss_BESTVEL_Buff_Parser(char * pData)
             }
 
             if(i != 18)
-                hGPSBestVelData.posType = (GNSS_POS_TypeDef)pos_status[i].index;
+                hGPSBestVelData.velType = (GNSS_POS_TypeDef)pos_status[i].index;
             else
-                hGPSBestVelData.posType = pos_type_INS_Invalid;//无效状态
+                hGPSBestVelData.velType = pos_type_INS_Invalid;//无效状态
 
             break;
 
@@ -1413,7 +1414,26 @@ void gnss_set_posture(double pitch, double roll, double azimuth,
 	char str[30] = {'\0',};
     // 发送 SETINITATTITUDE pitch roll azimuth pitchSTD rollSTD azSTD
     sprintf(str, "%.2f %.2f %.2f %.2f %.2f %.2f",pitch, roll, azimuth, pitchOffset, rollOffset, azimuthOffset);
-	//gd32_usart_write((uint8_t *)str, strlen(str));
+	//Uart_SendMsg(UART_TXPORT_COMPLEX_10, 0, strlen(str), (uint8_t *)str);
+}
+
+//IMU 至从天线杆臂参数配置
+void gnss_set_leverArm(double x, double y, double z, 
+							double a, double b, double c)
+{
+	char str[30] = {'\0',};
+    // 发送 SETIMUTOANTOFFSET2 x y z [a] [b] [c]
+    sprintf(str, "%.2f %.2f %.2f %.2f %.2f %.2f",x, y, z, a, b, c);
+	//Uart_SendMsg(UART_TXPORT_COMPLEX_10, 0, strlen(str), (uint8_t *)str);
+}
+
+//INS 输出位置偏移配置
+void gnss_set_ins_offset(double xoffset, double yoffset, double zoffset)
+{
+	char str[20] = {'\0',};
+    // 发送 SETIMUTOANTOFFSET2 x y z [a] [b] [c]
+    sprintf(str, "%.2f %.2f %.2f",xoffset, yoffset, zoffset);
+	//Uart_SendMsg(UART_TXPORT_COMPLEX_10, 0, strlen(str), (uint8_t *)str);
 }
 
 ARM1_TO_KALAM_MIX_TypeDef*  gnss_get_algorithm_dataPtr(void)
@@ -1459,13 +1479,19 @@ void gnss_Fetch_Data(void)
 }
 #else
 {
-    hGPSData.timestamp = hGPSZdaData.timestamp;
+    hGPSData.timestamp = hGPSRmcData.timestamp;
     hGPSData.StarNum = hGPSHeadingData.numSatellitesTracked;
+	
+	hGPSData.PositioningState = hGPSRmcData.valid;
+	
     hGPSData.ResolveState = hGPSHeadingData.calcState;
+	hGPSData.PositionType = hGPSHeadingData.posType;
+	hGPSData.VelType = hGPSBestVelData.velType;
+	
     hGPSData.hdgstddev = hGPSHeadingData.courseStandardDeviation;
     hGPSData.ptchstddev = hGPSHeadingData.pitchStandardDeviation;
-    hGPSData.PositioningState = hGPSRmcData.valid;
-    hGPSData.PositionType = hGPSHeadingData.posType;
+    
+    
     hGPSData.LonHemisphere = hGPSRmcData.LonHemisphere;
     hGPSData.Lon = hGPSRmcData.longitude;
     hGPSData.LatHemisphere = hGPSRmcData.LatHemisphere;

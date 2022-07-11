@@ -217,7 +217,7 @@ typedef struct gnss_bestvel_t
 {
 	BESTVEL_Header_TypeDef header;
 	Resolve_TypeDef calcState;					//解算状态
-	GNSS_VEL_TypeDef posType;					//速度类型
+	GNSS_VEL_TypeDef velType;					//速度类型
 	float latency;								//根据速度时标计算的延迟值，以秒为单位
 	float age;									//差分龄期
 	double horSpd;								//对地水平速度，m/s 
@@ -248,10 +248,11 @@ typedef struct gnss_gga_t{
 typedef struct GPS_Data_t
 {
 	float timestamp;					/* 时间戳, 单位: s , 精度: 0.0001*/
-	uint8_t StarNum;					/* 星数 */
-	Resolve_TypeDef ResolveState;		/* 解算状态 */
+	uint8_t StarNum;					/* 星数 */	
 	uint8_t PositioningState;			/* 定位状态 */
+	Resolve_TypeDef ResolveState;		/* 解算状态 */
 	GNSS_POS_TypeDef PositionType;		/* 位置类型 */
+	GNSS_VEL_TypeDef VelType;			/* 速度类型 */
 	char LonHemisphere;					/* 经度半球 E东经 或 W西经  */
 	float Lon;							/* 经度, 单位: °, 精度: 1e-7*/
 	char LatHemisphere;					/* 纬度半球 N北纬 或 S南纬 */
@@ -396,5 +397,15 @@ void gnss_request_saveconfig(void);
 uint8_t gnss_parse(uint8_t* pData, uint16_t dataLen);
 void gnss_fill_rs422(RS422_FRAME_DEF* rs422);
 ARM1_TO_KALAM_MIX_TypeDef*  gnss_get_algorithm_dataPtr(void);
+
+//INS 设置姿态和标准差
+void gnss_set_posture(double pitch, double roll, double azimuth, 
+							double pitchOffset, double rollOffset, double azimuthOffset);
+//IMU 至从天线杆臂参数配置
+void gnss_set_leverArm(double x, double y, double z, 
+							double a, double b, double c);
+
+//INS 输出位置偏移配置
+void gnss_set_ins_offset(double xoffset, double yoffset, double zoffset);
 
 #endif //____GNSS_H____
