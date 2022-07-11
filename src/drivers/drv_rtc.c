@@ -261,7 +261,7 @@ uint8_t WeekYearday(int years, int months, int days)
 uint8_t rtc_gnss_adjust_time(void) 
 {
     uint8_t ret = INS_EOK;
-    ARM1_TO_KALAM_MIX_TypeDef*  pGnss = gnss_get_algorithm_dataPtr();
+    GPS_AGRIC_TypeDef*  pGnss = gnss_get_algorithm_dataPtr();
 
     /* setup RTC time value */
     rtc_initpara.factor_asyn = prescaler_a;

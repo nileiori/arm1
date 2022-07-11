@@ -130,12 +130,17 @@ void InitialCompensateParm()
 
 void nav_task(void)
 {
-    InitialNavIncParm();
-    //初始化静态检查参数
-    InitialStaticDetectParm();
-    //初始化补偿量
-    InitialCompensateParm();  
+	static uint8_t nav_init = 0;
 
+	if(nav_init == 0)
+	{
+		nav_init = 1;
+	    InitialNavIncParm();
+	    //初始化静态检查参数
+	    InitialStaticDetectParm();
+	    //初始化补偿量
+	    InitialCompensateParm();  
+	}
     if(xImuStatus)//IMU数据
     {
         xImuStatus = 0;

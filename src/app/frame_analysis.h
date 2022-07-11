@@ -139,7 +139,7 @@ COMMON_EXT IMU_PARSE_DATA_TypeDef imuParseData;
 
 //写数据到DRAM
 void frame_writeDram(void);
-void frame_pack_and_send(void* pData, void *gps);
+void frame_pack_and_send(void* imu, void *gps);
 void frame_init(void);
 uint8_t frame_fill_imu(uint8_t* pData, uint16_t dataLen);
 

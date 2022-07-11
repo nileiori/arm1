@@ -23,7 +23,6 @@ GNSS_RMC_DataTypeDef hGPSRmcData;				//推荐定位信息
 GNSS_GGA_DataTypeDef hGPSGgaData;				//定位信息
 GPS_AGRIC_TypeDef    hGPSAgricData;
 
-ARM1_TO_KALAM_MIX_TypeDef g_algorithm;
 
 uint8_t gCmdIndex = 0;
 uint8_t gCmdTypeIndex = 0;
@@ -1413,6 +1412,7 @@ void gnss_set_posture(double pitch, double roll, double azimuth,
 {
 	char str[30] = {'\0',};
     // 发送 SETINITATTITUDE pitch roll azimuth pitchSTD rollSTD azSTD
+    // CONFIG INS ATTITUDE pitch roll azimuth pitchSTD rollSTD azSTD
     sprintf(str, "%.2f %.2f %.2f %.2f %.2f %.2f",pitch, roll, azimuth, pitchOffset, rollOffset, azimuthOffset);
 	//Uart_SendMsg(UART_TXPORT_COMPLEX_10, 0, strlen(str), (uint8_t *)str);
 }
@@ -1422,7 +1422,8 @@ void gnss_set_leverArm(double x, double y, double z,
 							double a, double b, double c)
 {
 	char str[30] = {'\0',};
-    // 发送 SETIMUTOANTOFFSET2 x y z [a] [b] [c]
+    // 发送 SETIMUTOANTOFFSET2 x y z [a] [b] [c]   
+    // CONFIG IMUTOANT OFFSET x y z [a] [b] [c]
     sprintf(str, "%.2f %.2f %.2f %.2f %.2f %.2f",x, y, z, a, b, c);
 	//Uart_SendMsg(UART_TXPORT_COMPLEX_10, 0, strlen(str), (uint8_t *)str);
 }
@@ -1432,13 +1433,14 @@ void gnss_set_ins_offset(double xoffset, double yoffset, double zoffset)
 {
 	char str[20] = {'\0',};
     // 发送 SETIMUTOANTOFFSET2 x y z [a] [b] [c]
+    // CONFIG INSSOL OFFSET xoffset yoffset zoffset
     sprintf(str, "%.2f %.2f %.2f",xoffset, yoffset, zoffset);
 	//Uart_SendMsg(UART_TXPORT_COMPLEX_10, 0, strlen(str), (uint8_t *)str);
 }
 
-ARM1_TO_KALAM_MIX_TypeDef*  gnss_get_algorithm_dataPtr(void)
+GPS_AGRIC_TypeDef*  gnss_get_algorithm_dataPtr(void)
 {
-    return &g_algorithm;
+    return &hGPSAgricData;
 }
 
 void gnss_Fetch_Data(void)

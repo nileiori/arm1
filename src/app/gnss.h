@@ -396,7 +396,7 @@ void gnss_request_ZDA(void);
 void gnss_request_saveconfig(void);
 uint8_t gnss_parse(uint8_t* pData, uint16_t dataLen);
 void gnss_fill_rs422(RS422_FRAME_DEF* rs422);
-ARM1_TO_KALAM_MIX_TypeDef*  gnss_get_algorithm_dataPtr(void);
+GPS_AGRIC_TypeDef*  gnss_get_algorithm_dataPtr(void);
 
 //INS 设置姿态和标准差
 void gnss_set_posture(double pitch, double roll, double azimuth, 
