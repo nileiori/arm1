@@ -254,9 +254,9 @@ typedef struct GPS_Data_t
 	GNSS_POS_TypeDef PositionType;		/* 位置类型 */
 	GNSS_VEL_TypeDef VelType;			/* 速度类型 */
 	char LonHemisphere;					/* 经度半球 E东经 或 W西经  */
-	float Lon;							/* 经度, 单位: °, 精度: 1e-7*/
+	double Lon;							/* 经度, 单位: °, 精度: 1e-7*/
 	char LatHemisphere;					/* 纬度半球 N北纬 或 S南纬 */
-	float Lat;							/* 纬度, 单位: °, 精度: 1e-7*/
+	double Lat;							/* 纬度, 单位: °, 精度: 1e-7*/
 	float Altitude;						/* 高度, 单位: m, 精度:0.01*/
 	float Heading;						/* 航向角, 单位: °, 精度: 0.01*/
 	float Pitch;						/* 俯仰角, 单位: °, 精度: 0.01*/

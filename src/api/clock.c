@@ -53,4 +53,35 @@ int ins_tick_from_millisecond(int32_t ms)
     return tick;
 }
 
+ins_bool_t ins_tick_timeout(ins_tick_t tick_start, ins_tick_t tick_long)
+{
+    ins_tick_t tick_end = tick_start + tick_long;
+    ins_tick_t tick_now = ins_tick_get();
+    ins_bool_t result = INS_FALSE;
+
+    if (tick_end >= tick_start)
+    {
+        if (tick_now >= tick_end)
+        {
+            result = INS_TRUE;
+        }
+        else
+        {
+            result = INS_FALSE;
+        }
+    }
+    else
+    {
+        if ((tick_now < tick_start) && (tick_now >= tick_end))
+        {
+            result = INS_TRUE;
+        }
+        else
+        {
+            result = INS_FALSE;
+        }
+    }
+
+    return result;
+}
 

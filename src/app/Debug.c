@@ -42,8 +42,9 @@ float theta = 0.0f;
 _debug_data Debug_Data;
 uint32_t Oldman_i = 0;
 uint32_t Oldman_J = 0;
-
-void Oscilloscope(MIX_DATA_TypeDef* rs422)
+#include "nav_task.h"
+extern CombineDataTypeDef combineData;
+void Oscilloscope(void)
 {
 #define	Accel_Scale 	20.0
 #define	Rate_Scale 		1260.0
@@ -56,21 +57,22 @@ void Oscilloscope(MIX_DATA_TypeDef* rs422)
 //	Oldman_i++;
   
 	//theta = theta+sensor.gyro.x*ts;
-	if(++Oldman_i >= 5ul)
+	//if(++Oldman_i >= 5ul)
 	{
 		Oldman_i = 0;
 		
 
-		Debug_Data.data1 = rs422->accelGrp[0];	//IMU
-		Debug_Data.data2 = rs422->accelGrp[1];		
-		Debug_Data.data3 = rs422->accelGrp[2];			
-		Debug_Data.data4 = rs422->gyroGrp[0];//att_air_G.x;
-		Debug_Data.data5 = rs422->gyroGrp[1];//att_air_G.y;
-		Debug_Data.data6 = rs422->gyroGrp[2];//tao;
-	
-		Debug_Data.data7 = rs422->roll; //вкл╛╫г//Angle.x;
-		Debug_Data.data8 = rs422->pitch;//Angle.y;
-		Debug_Data.data9 = rs422->azimuth;//Angle.z; 
+		//IMU
+		Debug_Data.data1 = combineData.gnssInfo.Lat;		
+		Debug_Data.data2 = combineData.gnssInfo.Lon;			
+		Debug_Data.data3 = combineData.gnssInfo.Altitude;//att_air_G.x;
+		Debug_Data.data4 = combineData.gnssInfo.ve;//att_air_G.y;
+		Debug_Data.data5 = combineData.gnssInfo.vn;//tao;
+		Debug_Data.data6 = combineData.gnssInfo.vu;	
+		
+		Debug_Data.data7 = combineData.gnssInfo.Pitch; //вкл╛╫г//Angle.x;
+		Debug_Data.data8 = combineData.gnssInfo.Roll;//Angle.y;
+		Debug_Data.data9 = combineData.gnssInfo.Heading;//Angle.z; 
 
 		//Debug_Data.data10  = att_air.x;//att_air.x;//Encoder.Angle_P; 
 		//Debug_Data.data11  = att_air.y;//att_air.y;//Encoder.Angle_R; 
@@ -82,7 +84,7 @@ void Oscilloscope(MIX_DATA_TypeDef* rs422)
 		//Debug_Data.data14 = Ouler_Point.y;//att_air.y;//gyro_air_n.y;//gyro_air.y;//KF_w[1];//Fd_InsData.rev;   gyro_air_n.y
 		//Debug_Data.data15 = Ouler_Point.z;//att_air.z;//gyro_air_n.z;//gyro_air.z;//KF_w[2];//Fd_InsData_State; gyro_air_n.z
 		
-		Debug_Data.data16  = Oldman_J++;//.Source;	 
+		Debug_Data.data16  = combineData.gnssInfo.timestamp;//.Source;	 
 
 			
 	  get_decode_data[0] = 0x23;
@@ -93,7 +95,7 @@ void Oscilloscope(MIX_DATA_TypeDef* rs422)
 		{	  				    
 			get_decode_data[65] += get_decode_data[i];
 		}	
-		//gd32_usart_write(get_decode_data,66);
+		gd32_usart_write(get_decode_data,66);
 		//Uart_SendMsg(UART_TXPORT_COMPLEX_8, 0, 66, get_decode_data);
 	}
 	#undef	Accel_Scale

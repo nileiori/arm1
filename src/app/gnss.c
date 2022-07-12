@@ -1482,7 +1482,7 @@ void gnss_Fetch_Data(void)
 #else
 {
     hGPSData.timestamp = hGPSRmcData.timestamp;
-    hGPSData.StarNum = hGPSHeadingData.numSatellitesTracked;
+    hGPSData.StarNum = hGPSHeadingData.numSatellitesUsed;
 	
 	hGPSData.PositioningState = hGPSRmcData.valid;
 	

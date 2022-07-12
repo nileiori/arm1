@@ -24,7 +24,7 @@ void        usart_tx_fifo_send(uint8_t *buffer, uint32_t size);
 
 void 		usart_transmit_dma(uint8_t *pData, uint16_t Size);
 
-uint16_t uart4_dma_recv_data(uint8_t* buf);
+uint16_t uart4_dma_recv_data(uint8_t* buf, int size);
 
 uint32_t uart4_dma_send_data(uint8_t* data, uint16_t size);
 

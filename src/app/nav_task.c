@@ -127,7 +127,7 @@ void InitialCompensateParm()
     g_Compensate_Params.gnssArmLength[1] = -0.1746;
     g_Compensate_Params.gnssArmLength[2] = -0.099;
 }
-
+extern void Oscilloscope(void);
 void nav_task(void)
 {
 	static uint8_t nav_init = 0;
@@ -161,7 +161,8 @@ void nav_task(void)
     {
         xCommStatus = 0;
         frame_pack_and_send(&g_Export_Result, &hGPSData);
-        frame_writeDram();
+        //frame_writeDram();
+        //Oscilloscope();
     }
 }
 

@@ -256,7 +256,7 @@ void DMA0_Channel7_IRQHandler(void)
 
 }
 
-uint16_t uart4_dma_recv_data(uint8_t* buf)
+uint16_t uart4_dma_recv_data(uint8_t* buf, int size)
 {
     uint16_t  recvLen = 0;
 
@@ -264,6 +264,7 @@ uint16_t uart4_dma_recv_data(uint8_t* buf)
     {
         g_UartData.recvStatus = 0x00;
         recvLen = g_UartData.recvLength;
+        if(size < recvLen)recvLen = size;
         memcpy(buf, g_UartData.recvBuffer, recvLen);
     }
 
@@ -422,7 +423,7 @@ static void gpio_configuration(void)
 uint32_t gd32_usart_read(void *buffer, uint32_t size)
 {
 #if defined(INS_USING_UART4_DMA0)
-	return uart4_dma_recv_data(buffer);
+	return uart4_dma_recv_data(buffer, size);
 #else
     return _serial_int_rx(&serial4, buffer, size);
 #endif
