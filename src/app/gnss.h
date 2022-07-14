@@ -136,6 +136,16 @@ typedef struct gnss_rmc_t
 	char mode;							//模式
 }GNSS_RMC_DataTypeDef;
 
+typedef struct gnss_time_syn_t
+{
+	uint8_t year;                                                            
+    uint8_t month;                                                           
+    uint8_t date;                                                            
+    uint8_t hour;                                                            
+    uint8_t minute;                                                          
+    uint8_t second; 														
+}GNSS_TIME_SYN_DataTypeDef;
+
 typedef struct gnss_vtg_t
 {
 	double courseNorthAngle;			//以真北为参考基准的地面航向
@@ -296,6 +306,8 @@ typedef struct
 {
 	char sync[10];			//同步字符
 	uint8_t CPUIDle;  		//处理器空闲时间的最小百分比，每秒计算 1 次
+	char TimeRef[10];		//接收机工作的时间系统
+	char TimeQuality[10];	//GPS 时间质量
 	uint16_t gpsWn;			//GPS 周数
 	uint32_t gpsMs;			//GPS 周内秒，精确到 ms
 	uint8_t  leapSec; 		//闰秒
@@ -384,6 +396,8 @@ int gnss_TRA_Buff_Parser(char * pData);
 int gnss_AGRIC_Buff_Parser(char * pData);
 void gnss_Fetch_Data(void);
 void gnss_fill_data(uint8_t* pData, uint16_t dataLen);
+uint8_t gnss_isLocation(void);
+uint8_t gnss_time_is_valid(void);
 
 void gnss_config_movingbase(void);
 void gnss_request_GGA(void);

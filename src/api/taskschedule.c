@@ -13,7 +13,7 @@ TIME_TASK MyTimerTask[MAX_TIMETASK] =
     {ENABLE, DISABLE, 0,  10, 	 usart_dispose_recvDataTask},
 #endif
     {ENABLE, DISABLE, 20, 1000,  system_1s_task},
-	{ENABLE, DISABLE, 0,  40,	 PublicTimerTask}
+	//{ENABLE, DISABLE, 0,  40,	 PublicTimerTask}
 };
 
 

@@ -55,12 +55,12 @@ OF SUCH DAMAGE.
 //#include "fmc_operation.h"
 #include "DRamAdapter.h"
 #include "nav_task.h"
-
+#include "Time_Unify.h"
 #define	ARM1_TO_ARM2_IO		GD32F450_PA12_PIN_NUM
 #define	SYN_ARM_IO			GD32F450_PE2_PIN_NUM
 #define	FPGA_TO_ARM1_INT	GD32F450_PA2_PIN_NUM
 
-#define	ARM1_TO_ARM2_SYN gd32_pin_write(SYN_ARM_IO, PIN_LOW)
+#define	ARM1_TO_ARM2_SYN 	gd32_pin_write(SYN_ARM_IO, PIN_LOW)
 
 
 #define GNSS_BUFFER_SIZE            1000
@@ -96,6 +96,13 @@ uint8_t imu_ready = 0;
 
 uint8_t fpga_dram_wr[1000] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10,};
 uint8_t fpga_dram_rd[1000];
+
+void syn_arm2(void)
+{
+	gd32_pin_write(SYN_ARM_IO, PIN_LOW);
+	gd32_pin_write(SYN_ARM_IO, PIN_LOW);
+	gd32_pin_write(SYN_ARM_IO, PIN_HIGH);
+}
 
 void fpga_dram_fill(void)
 {
@@ -344,9 +351,10 @@ void fpga_int_hdr(void *args)
     imu_comm5_rx();
 }
 
+gtime_t tt;
 void arm_syn_int_hdr(void *args)
 {
-
+	DRam_Read(0, (uint16_t*)&tt.time, 6);
 }
 
 void gpio_init(void)
@@ -380,8 +388,8 @@ static void peripherals_init(void)
     //Uart_TxInit(UART_TXPORT_RS232_1, UART_BAUDRATE_115200BPS, UART_PARITY_NONE, UART_STOPBIT_ONE, UART_DEFAULT, UART_ENABLE);
     //Uart_RxInit(UART_RXPORT_RS232_1, UART_BAUDRATE_115200BPS, UART_PARITY_NONE, UART_STOPBIT_ONE, UART_DEFAULT, UART_ENABLE);
 
-    Uart_TxInit(UART_TXPORT_COMPLEX_8, UART_BAUDRATE_115200BPS, UART_PARITY_NONE, UART_STOPBIT_ONE, UART_RS422, UART_ENABLE);
-    Uart_RxInit(UART_RXPORT_COMPLEX_8, UART_BAUDRATE_115200BPS, UART_PARITY_NONE, UART_STOPBIT_ONE, UART_RS422, UART_ENABLE);
+    Uart_TxInit(UART_TXPORT_COMPLEX_8, UART_BAUDRATE_230400BPS, UART_PARITY_NONE, UART_STOPBIT_ONE, UART_RS422, UART_ENABLE);
+    Uart_RxInit(UART_RXPORT_COMPLEX_8, UART_BAUDRATE_230400BPS, UART_PARITY_NONE, UART_STOPBIT_ONE, UART_RS422, UART_ENABLE);
 
     Uart_TxInit(UART_TXPORT_COMPLEX_9, UART_BAUDRATE_115200BPS, UART_PARITY_NONE, UART_STOPBIT_ONE, UART_RS232, UART_ENABLE);
     Uart_RxInit(UART_RXPORT_COMPLEX_9, UART_BAUDRATE_115200BPS, UART_PARITY_NONE, UART_STOPBIT_ONE, UART_RS232, UART_ENABLE);
@@ -417,7 +425,6 @@ void gnss_comm2_task(void)
         gnss_comm2_parse(fpga_comm2_rxbuffer, gnss_comm2_len); //send to fpga
         gnss_comm2_len = 0;
 
-        //ARM1_TO_ARM2_SYN;	//syn call
     }
 
 }
@@ -431,7 +438,6 @@ void gnss_comm3_task(void)
         gnss_comm3_parse(fpga_comm3_rxbuffer, gnss_comm3_len); //send to fpga
         gnss_comm3_len = 0;
 
-        //ARM1_TO_ARM2_SYN;	//syn call
     }
 
 }
@@ -439,28 +445,44 @@ void gnss_comm3_task(void)
 
 void imu_comm5_task(void)
 {
-    uint8_t ucTimeOneSecondChangeSecond;
-
     if(imu_ready)//pdMS_TO_TICKS(100)
     {
         imu_ready = 0;
         frame_fill_imu(fpga_comm5_rxbuffer, imu_comm5_len); //send to fpga
+        
         xImuStatus = 1;
-
-        if(ucTimeOneSecondChangeSecond != RSOFT_RTC_SECOND)
-        {
-            ucTimeOneSecondChangeSecond = RSOFT_RTC_SECOND;
-#ifdef configUse_debug
-            //Uart_SendMsg(UART_TXPORT_COMPLEX_8, 0, imu_comm5_len, fpga_comm5_rxbuffer);
-#endif
-        }
-
         imu_comm5_len = 0;
-
     }
 
 }
 
+void adjust_rtc(void)
+{
+	static uint8_t ucTimeOneSecondChangeHour = 0xff;
+	static uint8_t rtcAdjInit = 0;
+
+	//开机等待时间有效校准一次，之后每小时校准一次
+	if(rtcAdjInit == 0)
+	{
+		if(INS_EOK == rtc_gnss_adjust_time())
+		{
+			rtcAdjInit = 1;
+			rtc_update();
+			ucTimeOneSecondChangeHour = RSOFT_RTC_HOUR;
+		}
+	}
+	else
+	{
+	    if(ucTimeOneSecondChangeHour != RSOFT_RTC_HOUR)
+	    {
+	        ucTimeOneSecondChangeHour = RSOFT_RTC_HOUR;
+
+	        rtc_gnss_adjust_time();
+	    }
+    }
+}
+
+extern void lfs_selftest(void);
 int main(void)
 {
 
@@ -474,7 +496,7 @@ int main(void)
 #ifdef INS_USING_UART4_DMA0
     //Public_SetTestTimer(comm_handle, 10);
 #endif
-	
+	//lfs_selftest();
     while(1)
     {
         gnss_comm2_task();
@@ -482,7 +504,8 @@ int main(void)
         imu_comm5_task();
         nav_task();
         comm_handle();
-        //TimerTaskScheduler();
+        adjust_rtc();
+        TimerTaskScheduler();
     }
 }
 

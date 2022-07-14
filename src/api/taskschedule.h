@@ -27,8 +27,8 @@ typedef enum
 #ifndef INS_USING_UART4_DMA0
     TIME_USART = 0,
 #endif
-	TIME_SYS_PUBLIC,
-    TIME_SYS_POWER_DOWN,
+	TIME_SYS_1S,
+    //TIME_SYS_POWER_DOWN,
     MAX_TIMETASK
 } TIMERTASK;
 /*------------------------ Execute task by timer--------------------------------
