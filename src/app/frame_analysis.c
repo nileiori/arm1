@@ -173,8 +173,8 @@ void frame_pack_and_send(void* imu, void *gps)
     rs422_frame.data_stream.accelY = (short)(result->accm[1]/Accel_Scale*Sensor_Scale);
     rs422_frame.data_stream.accelZ = (short)(result->accm[2]/Accel_Scale*Sensor_Scale);
 
-    rs422_frame.data_stream.latitude = (long)(result->latitude * 100000);
-    rs422_frame.data_stream.longitude = (long)(result->longitude * 100000);
+    rs422_frame.data_stream.latitude = (long)(result->latitude * 10000000);
+    rs422_frame.data_stream.longitude = (long)(result->longitude * 10000000);
     rs422_frame.data_stream.altitude = (long)(result->altitude * 1000);
 
     temp = log(2) / log(EXP_E);
@@ -183,8 +183,18 @@ void frame_pack_and_send(void* imu, void *gps)
     rs422_frame.data_stream.vu = (short)(result->vu / temp * Sensor_Scale);
 
     rs422_frame.data_stream.status = 0;
-    if((gnss->PositionType != 0)&&(gnss->PositionType != 0xff))rs422_frame.data_stream.status |= 0x1;
-    if(gnss->ResolveState == 0)rs422_frame.data_stream.status |= 0x4;
+    if(gnss->ResolveState[0] == 0)
+    	rs422_frame.data_stream.status |= 0x1;
+    else
+    	rs422_frame.data_stream.status &= ~0x1;
+    if(gnss->ResolveState[1] == 0)
+    	rs422_frame.data_stream.status |= 0x2;
+    else
+    	rs422_frame.data_stream.status &= ~0x2;
+    if(gnss->ResolveState[2] == 0)
+    	rs422_frame.data_stream.status |= 0x4;
+    else
+    	rs422_frame.data_stream.status &= ~0x4;
     //pull_couter = 3;
     switch(pull_couter)
     {

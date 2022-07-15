@@ -135,7 +135,7 @@ void DebugMon_Handler(void)
 void PendSV_Handler(void)
 {
 }
-
+extern uint16_t rtc_update_flg;
 /*!
     \brief    this function handles SysTick exception
     \param[in]  none
@@ -144,7 +144,7 @@ void PendSV_Handler(void)
 */
 void SysTick_Handler(void)
 {
-    ins_tick_increase();
+    ins_tick_increase();rtc_update_flg++;
     //delay_decrement();
 }
 

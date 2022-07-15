@@ -260,9 +260,8 @@ typedef struct GPS_Data_t
 	float timestamp;					/* 时间戳, 单位: s , 精度: 0.0001*/
 	uint8_t StarNum;					/* 星数 */	
 	uint8_t PositioningState;			/* 定位状态 */
-	Resolve_TypeDef ResolveState;		/* 解算状态 */
-	GNSS_POS_TypeDef PositionType;		/* 位置类型 */
-	GNSS_VEL_TypeDef VelType;			/* 速度类型 */
+	Resolve_TypeDef ResolveState[3];	/* 解算状态 */
+	GNSS_POS_TypeDef PositionType[3];	/* 位置/速度/姿态类型 */
 	char LonHemisphere;					/* 经度半球 E东经 或 W西经  */
 	double Lon;							/* 经度, 单位: °, 精度: 1e-7*/
 	char LatHemisphere;					/* 纬度半球 N北纬 或 S南纬 */

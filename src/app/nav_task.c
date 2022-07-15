@@ -154,7 +154,7 @@ void nav_task(void)
     {
         xGnssStatus = 0;
         memcpy((void*)&combineData.gnssInfo.timestamp, (void*)&hGPSData.timestamp, sizeof(GPSDataTypeDef));
-        //Uart_SendMsg(UART_TXPORT_COMPLEX_8, 0, sizeof(GPSDataTypeDef), (uint8_t*)&combineData.gnssInfo.timestamp);
+        //Uart_SendMsg(UART_TXPORT_COMPLEX_8, 0, 4, (uint8_t*)&combineData.gnssInfo.timestamp);
         //gd32_usart_write((uint8_t*)&combineData.gnssInfo.timestamp, sizeof(GPSDataTypeDef));
     }
     if(xCommStatus)//串口发送至上位机

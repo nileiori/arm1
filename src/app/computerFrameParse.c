@@ -233,7 +233,7 @@ static struct
 
 void comm_handle(void)
 {
-    usart_rx_data.usart_rx_count = gd32_usart_read(usart_rx_data.usart_rx_buffer, 100);
+    usart_rx_data.usart_rx_count = gd32_usart_read(usart_rx_data.usart_rx_buffer, USART_SERIAL_RB_BUFSZ);
 
     if(usart_rx_data.usart_rx_count)
     {

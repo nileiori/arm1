@@ -55,15 +55,18 @@ OF SUCH DAMAGE.
 //#include "fmc_operation.h"
 #include "DRamAdapter.h"
 #include "nav_task.h"
+#include "Time_Unify.h"
+
+#include "m_queue.h"
 
 #define	ARM1_TO_ARM2_IO		GD32F450_PA12_PIN_NUM
 #define	SYN_ARM_IO			GD32F450_PE2_PIN_NUM
 #define	FPGA_TO_ARM1_INT	GD32F450_PA2_PIN_NUM
 
-#define	ARM1_TO_ARM2_SYN gd32_pin_write(SYN_ARM_IO, PIN_LOW)
+#define	ARM1_TO_ARM2_SYN 	gd32_pin_write(SYN_ARM_IO, PIN_LOW)
 
 
-#define GNSS_BUFFER_SIZE            1000
+#define GNSS_BUFFER_SIZE            1024
 #define IMU_BUFFER_SIZE             100
 
 #define TASK_GNSS_COMM2_BIT ( 1 << 0 )
@@ -87,6 +90,11 @@ static uint8_t fpga_comm5_rxbuffer[IMU_BUFFER_SIZE];
 static uint16_t imu_comm5_len = 0;
 
 
+static uint8_t comm2_fifo[GNSS_BUFFER_SIZE];
+static uint8_t comm3_fifo[GNSS_BUFFER_SIZE];
+CirQueue_t comm2_queue;
+CirQueue_t comm3_queue;
+
 
 uint8_t fpga_syn = 0;//fpga同步
 uint8_t gnss_comm2_ready = 0;
@@ -96,6 +104,14 @@ uint8_t imu_ready = 0;
 
 uint8_t fpga_dram_wr[1000] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10,};
 uint8_t fpga_dram_rd[1000];
+
+
+void syn_arm2(void)
+{
+	gd32_pin_write(SYN_ARM_IO, PIN_LOW);
+	gd32_pin_write(SYN_ARM_IO, PIN_LOW);
+	gd32_pin_write(SYN_ARM_IO, PIN_HIGH);
+}
 
 void fpga_dram_fill(void)
 {
@@ -122,15 +138,15 @@ static void prvSetupHardware( void )
 
     nvic_priority_group_set(NVIC_PRIGROUP_PRE4_SUB0);
 
-    systick_config();
+    //systick_config();
 
-    #ifdef	configUse_SEGGER_RTT
+#ifdef	configUse_SEGGER_RTT
     SEGGER_RTT_Init();
     SEGGER_RTT_printf(0, "\r\nCK_SYS is %d", rcu_clock_freq_get(CK_SYS));
     SEGGER_RTT_printf(0, "\r\nCK_AHB is %d", rcu_clock_freq_get(CK_AHB));
     SEGGER_RTT_printf(0, "\r\nCK_APB1 is %d", rcu_clock_freq_get(CK_APB1));
     SEGGER_RTT_printf(0, "\r\nCK_APB2 is %d", rcu_clock_freq_get(CK_APB2));
-    #endif
+#endif
 }
 #if 0
 /////////////////////////////power down///////////////////////////////////////////
@@ -190,10 +206,10 @@ void gnss_comm2_rx(void)
         gnss_comm2_len = 0;
     }
 
-    gnss_comm2_len += Uart_RecvMsg(UART_RXPORT_COMPLEX_9, 100, fpga_comm2_rxbuffer + gnss_comm2_len);
-
+    gnss_comm2_len = Uart_RecvMsg(UART_RXPORT_COMPLEX_9, GNSS_BUFFER_SIZE, fpga_comm2_rxbuffer);
+	EnCirQueue(fpga_comm2_rxbuffer, gnss_comm2_len,comm2_queue);
     //gnss_comm2_len = Uart_RecvMsg(UART_RXPORT_COMPLEX_9, 900, fpga_comm2_rxbuffer);
-    if(gnss_comm2_len >= 700)
+    if(gnss_comm2_len)
     {
         gnss_comm2_ready = 1;
     }
@@ -201,12 +217,13 @@ void gnss_comm2_rx(void)
 }
 
 void gnss_comm2_parse(uint8_t* pData, uint16_t dataLen)
+#if 0
 {
     uint8_t temp, *p = pData;
-
+	uint8_t *pDst;
     do
     {
-        temp = *p++;
+        temp = *p;
         dataLen--;
 
         if(('$' == temp) || ('#' == temp))
@@ -214,6 +231,7 @@ void gnss_comm2_parse(uint8_t* pData, uint16_t dataLen)
             gnss_comm2_parse_len = 0;
             fpga_comm2_parse_rxbuffer[gnss_comm2_parse_len] = temp;
             gnss_comm2_parse_len++;
+            pDst = p;
         }
         else if(0x0a == temp)
         {
@@ -222,19 +240,18 @@ void gnss_comm2_parse(uint8_t* pData, uint16_t dataLen)
                 fpga_comm2_parse_rxbuffer[gnss_comm2_parse_len] = temp;
                 gnss_comm2_parse_len++;
 
-                if((0 == strncmp("$GNRMC", (char const *)fpga_comm2_parse_rxbuffer, 6))
-                        || (0 == strncmp("#AGRICA", (char const *)fpga_comm2_parse_rxbuffer, 7))
+                if((0 == strncmp("#AGRICA", (char const *)fpga_comm2_parse_rxbuffer, 7))
                         || (0 == strncmp("#BESTPOSA", (char const *)fpga_comm2_parse_rxbuffer, 9))
                         || (0 == strncmp("#BESTVELA", (char const *)fpga_comm2_parse_rxbuffer, 9))
                         || (0 == strncmp("$GNTRA", (char const *)fpga_comm2_parse_rxbuffer, 6))
                         || (0 == strncmp("$GPTRA", (char const *)fpga_comm2_parse_rxbuffer, 6))
                   )
                 {
-                    #ifdef configUse_debug
+#ifdef configUse_debug
                     //Uart_SendMsg(UART_TXPORT_COMPLEX_8, 0, gnss_comm2_parse_len, fpga_comm2_parse_rxbuffer);
                     //gd32_usart_write(fpga_comm2_parse_rxbuffer, gnss_comm2_parse_len);
-                    #endif
-                    gnss_fill_data(fpga_comm2_parse_rxbuffer, gnss_comm2_parse_len);
+#endif
+                    gnss_fill_data(pDst, gnss_comm2_parse_len);
                     gnss_comm2_parse_len = 0;
                 }
             }
@@ -244,39 +261,145 @@ void gnss_comm2_parse(uint8_t* pData, uint16_t dataLen)
             fpga_comm2_parse_rxbuffer[gnss_comm2_parse_len] = temp;
             gnss_comm2_parse_len++;
         }
+        p++;
     }
     while(dataLen > 0);
 
     gnss_comm2_parse_len = 0;
     gnss_comm2_len = 0;
 }
+#else
+{
+    uint8_t temp, *p = pData;
+    do
+    {
+		if(ByteDeCirQueue(&temp, comm2_queue))
+		{
+	        if(('$' == temp) || ('#' == temp))
+	        {
+	            gnss_comm2_parse_len = 0;
+	            fpga_comm2_parse_rxbuffer[gnss_comm2_parse_len] = temp;
+	            gnss_comm2_parse_len++;
+	        }
+	        else if(0x0a == temp)
+	        {
+	            if(fpga_comm2_parse_rxbuffer[gnss_comm2_parse_len - 1] == 0x0d)//回车换行结尾
+	            {
+	                fpga_comm2_parse_rxbuffer[gnss_comm2_parse_len] = temp;
+	                gnss_comm2_parse_len++;
 
+	                if((0 == strncmp("#AGRICA", (char const *)fpga_comm2_parse_rxbuffer, 7))
+	                        || (0 == strncmp("#BESTPOSA", (char const *)fpga_comm2_parse_rxbuffer, 9))
+	                        || (0 == strncmp("#BESTVELA", (char const *)fpga_comm2_parse_rxbuffer, 9))
+	                        || (0 == strncmp("$GNTRA", (char const *)fpga_comm2_parse_rxbuffer, 6))
+	                        || (0 == strncmp("$GPTRA", (char const *)fpga_comm2_parse_rxbuffer, 6))
+	                  )
+	                {
+#ifdef configUse_debug
+	                    //Uart_SendMsg(UART_TXPORT_COMPLEX_8, 0, gnss_comm2_parse_len, fpga_comm2_parse_rxbuffer);
+	                    //gd32_usart_write(fpga_comm2_parse_rxbuffer, gnss_comm2_parse_len);
+#endif
+	                    gnss_fill_data(fpga_comm2_parse_rxbuffer, gnss_comm2_parse_len);
+	                    gnss_comm2_parse_len = 0;
+	                    break;
+	                }
+	            }
+	        }
+	        else
+	        {
+	            fpga_comm2_parse_rxbuffer[gnss_comm2_parse_len] = temp;
+	            gnss_comm2_parse_len++;
+	        }
+	   }
+    }
+    while(1);
+
+    gnss_comm2_parse_len = 0;
+    gnss_comm2_len = 0;
+}
+#endif
 void gnss_comm3_rx(void)
 {
 
-    if(gnss_comm3_len >= (GNSS_BUFFER_SIZE - 100))//防止越界
+    if(gnss_comm3_len >= (GNSS_BUFFER_SIZE - 200))//防止越界
     {
         gnss_comm3_len = 0;
     }
 
-    gnss_comm3_len += Uart_RecvMsg(UART_RXPORT_COMPLEX_10, 100, fpga_comm3_rxbuffer + gnss_comm3_len);
-
+    gnss_comm3_len + Uart_RecvMsg(UART_RXPORT_COMPLEX_10, GNSS_BUFFER_SIZE, fpga_comm3_rxbuffer);
+	EnCirQueue(fpga_comm3_rxbuffer, gnss_comm3_len,comm3_queue);
     //gnss_comm3_len = Uart_RecvMsg(UART_RXPORT_COMPLEX_10, 900, fpga_comm3_rxbuffer);
-    if(gnss_comm3_len >= 500)
+    if(gnss_comm3_len >= 200)
     {
         gnss_comm3_ready = 1;
     }
 }
 
 void gnss_comm3_parse(uint8_t* pData, uint16_t dataLen)
+#if 0
 {
     uint8_t temp, *p = pData;
-
+	uint8_t *pDst;
     do
     {
-        temp = *p++;
+        temp = *p;
         dataLen--;
 
+        if(('$' == temp) || ('#' == temp))
+        {
+            gnss_comm3_parse_len = 0;
+            fpga_comm3_parse_rxbuffer[gnss_comm3_parse_len] = temp;
+            gnss_comm3_parse_len++;
+            pDst = p;
+        }
+        else if(0x0a == temp)
+        {
+            if(fpga_comm3_parse_rxbuffer[gnss_comm3_parse_len - 1] == 0x0d)//回车换行结尾
+            {
+                fpga_comm3_parse_rxbuffer[gnss_comm3_parse_len] = temp;
+                gnss_comm3_parse_len++;
+
+                if((0 == strncmp("#HEADINGA", (char const *)fpga_comm3_parse_rxbuffer, 9))
+                		|| (0 == strncmp("#BESTPOSA", (char const *)fpga_comm3_parse_rxbuffer, 9))
+                        || (0 == strncmp("#BESTVELA", (char const *)fpga_comm3_parse_rxbuffer, 9))
+                		||(0 == strncmp("$GNRMC", (char const *)fpga_comm3_parse_rxbuffer, 6))
+                		||(0 == strncmp("$GNGGA", (char const *)fpga_comm3_parse_rxbuffer, 6))
+                        || (0 == strncmp("$GNVTG", (char const *)fpga_comm3_parse_rxbuffer, 6))
+                        || (0 == strncmp("$GNZDA", (char const *)fpga_comm3_parse_rxbuffer, 6))
+                        || (0 == strncmp("$GPZDA", (char const *)fpga_comm3_parse_rxbuffer, 6))
+                        || (0 == strncmp("$GNTRA", (char const *)fpga_comm3_parse_rxbuffer, 6))
+                        || (0 == strncmp("$GPTRA", (char const *)fpga_comm3_parse_rxbuffer, 6))
+                        
+                  )
+                {
+#ifdef configUse_debug
+                    //Uart_SendMsg(UART_TXPORT_COMPLEX_8, 0, gnss_comm3_parse_len, fpga_comm3_parse_rxbuffer);
+                    //gd32_usart_write(fpga_comm3_parse_rxbuffer, gnss_comm3_parse_len);
+#endif
+                    gnss_fill_data(pDst, gnss_comm3_parse_len);
+                    gnss_comm3_parse_len = 0;
+                }
+            }
+        }
+        else
+        {
+            fpga_comm3_parse_rxbuffer[gnss_comm3_parse_len] = temp;
+            gnss_comm3_parse_len++;
+        }
+        p++;
+    }
+    while(dataLen > 0);
+
+    gnss_comm3_parse_len = 0;
+    gnss_comm3_len = 0;
+}
+#else 
+{
+    uint8_t temp, *p = pData;
+    do
+    {
+		if(ByteDeCirQueue(&temp, comm3_queue))
+		{
         if(('$' == temp) || ('#' == temp))
         {
             gnss_comm3_parse_len = 0;
@@ -290,22 +413,26 @@ void gnss_comm3_parse(uint8_t* pData, uint16_t dataLen)
                 fpga_comm3_parse_rxbuffer[gnss_comm3_parse_len] = temp;
                 gnss_comm3_parse_len++;
 
-                if((0 == strncmp("$GNGGA", (char const *)fpga_comm3_parse_rxbuffer, 6))
-                        || (0 == strncmp("$GNRMC", (char const *)fpga_comm3_parse_rxbuffer, 6))
+                if((0 == strncmp("#HEADINGA", (char const *)fpga_comm3_parse_rxbuffer, 9))
+                		|| (0 == strncmp("#BESTPOSA", (char const *)fpga_comm3_parse_rxbuffer, 9))
+                        || (0 == strncmp("#BESTVELA", (char const *)fpga_comm3_parse_rxbuffer, 9))
+                		||(0 == strncmp("$GNRMC", (char const *)fpga_comm3_parse_rxbuffer, 6))
+                		||(0 == strncmp("$GNGGA", (char const *)fpga_comm3_parse_rxbuffer, 6))
                         || (0 == strncmp("$GNVTG", (char const *)fpga_comm3_parse_rxbuffer, 6))
                         || (0 == strncmp("$GNZDA", (char const *)fpga_comm3_parse_rxbuffer, 6))
                         || (0 == strncmp("$GPZDA", (char const *)fpga_comm3_parse_rxbuffer, 6))
                         || (0 == strncmp("$GNTRA", (char const *)fpga_comm3_parse_rxbuffer, 6))
                         || (0 == strncmp("$GPTRA", (char const *)fpga_comm3_parse_rxbuffer, 6))
-                        || (0 == strncmp("#HEADINGA", (char const *)fpga_comm3_parse_rxbuffer, 9))
+                        
                   )
                 {
-                    #ifdef configUse_debug
+#ifdef configUse_debug
                     //Uart_SendMsg(UART_TXPORT_COMPLEX_8, 0, gnss_comm3_parse_len, fpga_comm3_parse_rxbuffer);
                     //gd32_usart_write(fpga_comm3_parse_rxbuffer, gnss_comm3_parse_len);
-                    #endif
+#endif
                     gnss_fill_data(fpga_comm3_parse_rxbuffer, gnss_comm3_parse_len);
                     gnss_comm3_parse_len = 0;
+                    break;
                 }
             }
         }
@@ -314,13 +441,15 @@ void gnss_comm3_parse(uint8_t* pData, uint16_t dataLen)
             fpga_comm3_parse_rxbuffer[gnss_comm3_parse_len] = temp;
             gnss_comm3_parse_len++;
         }
+			}
     }
-    while(dataLen > 0);
+    while(1);
 
     gnss_comm3_parse_len = 0;
     gnss_comm3_len = 0;
 }
 
+#endif
 void imu_comm5_rx(void)
 {
     imu_comm5_len = Uart_RecvMsg(UART_RXPORT_COMPLEX_12, 23, fpga_comm5_rxbuffer);
@@ -344,9 +473,10 @@ void fpga_int_hdr(void *args)
     imu_comm5_rx();
 }
 
+gtime_t tt;
 void arm_syn_int_hdr(void *args)
 {
-
+	DRam_Read(0, (uint16_t*)&tt.time, 6);
 }
 
 void gpio_init(void)
@@ -380,8 +510,8 @@ static void peripherals_init(void)
     //Uart_TxInit(UART_TXPORT_RS232_1, UART_BAUDRATE_115200BPS, UART_PARITY_NONE, UART_STOPBIT_ONE, UART_DEFAULT, UART_ENABLE);
     //Uart_RxInit(UART_RXPORT_RS232_1, UART_BAUDRATE_115200BPS, UART_PARITY_NONE, UART_STOPBIT_ONE, UART_DEFAULT, UART_ENABLE);
 
-    Uart_TxInit(UART_TXPORT_COMPLEX_8, UART_BAUDRATE_115200BPS, UART_PARITY_NONE, UART_STOPBIT_ONE, UART_RS422, UART_ENABLE);
-    Uart_RxInit(UART_RXPORT_COMPLEX_8, UART_BAUDRATE_115200BPS, UART_PARITY_NONE, UART_STOPBIT_ONE, UART_RS422, UART_ENABLE);
+    Uart_TxInit(UART_TXPORT_COMPLEX_8, UART_BAUDRATE_230400BPS, UART_PARITY_NONE, UART_STOPBIT_ONE, UART_RS422, UART_ENABLE);
+    Uart_RxInit(UART_RXPORT_COMPLEX_8, UART_BAUDRATE_230400BPS, UART_PARITY_NONE, UART_STOPBIT_ONE, UART_RS422, UART_ENABLE);
 
     Uart_TxInit(UART_TXPORT_COMPLEX_9, UART_BAUDRATE_115200BPS, UART_PARITY_NONE, UART_STOPBIT_ONE, UART_RS232, UART_ENABLE);
     Uart_RxInit(UART_RXPORT_COMPLEX_9, UART_BAUDRATE_115200BPS, UART_PARITY_NONE, UART_STOPBIT_ONE, UART_RS232, UART_ENABLE);
@@ -411,13 +541,12 @@ static void peripherals_init(void)
 void gnss_comm2_task(void)
 {
 
-    if(gnss_comm2_ready)
+//    if(gnss_comm2_ready)
     {
         gnss_comm2_ready = 0;
         gnss_comm2_parse(fpga_comm2_rxbuffer, gnss_comm2_len); //send to fpga
         gnss_comm2_len = 0;
 
-        //ARM1_TO_ARM2_SYN;	//syn call
     }
 
 }
@@ -425,13 +554,12 @@ void gnss_comm2_task(void)
 void gnss_comm3_task(void)
 {
 
-    if(gnss_comm3_ready)
+    //if(gnss_comm3_ready)
     {
         gnss_comm3_ready = 0;
         gnss_comm3_parse(fpga_comm3_rxbuffer, gnss_comm3_len); //send to fpga
         gnss_comm3_len = 0;
 
-        //ARM1_TO_ARM2_SYN;	//syn call
     }
 
 }
@@ -439,50 +567,93 @@ void gnss_comm3_task(void)
 
 void imu_comm5_task(void)
 {
-    uint8_t ucTimeOneSecondChangeSecond;
-
     if(imu_ready)//pdMS_TO_TICKS(100)
     {
         imu_ready = 0;
         frame_fill_imu(fpga_comm5_rxbuffer, imu_comm5_len); //send to fpga
+        
         xImuStatus = 1;
-
-        if(ucTimeOneSecondChangeSecond != RSOFT_RTC_SECOND)
-        {
-            ucTimeOneSecondChangeSecond = RSOFT_RTC_SECOND;
-            #ifdef configUse_debug
-            //Uart_SendMsg(UART_TXPORT_COMPLEX_8, 0, imu_comm5_len, fpga_comm5_rxbuffer);
-            #endif
-        }
-
         imu_comm5_len = 0;
-
     }
 
 }
 
+void adjust_rtc(void)
+{
+	static uint8_t ucTimeOneSecondChangeHour = 0xff;
+	static uint8_t rtcAdjInit = 0;
+
+	//开机等待时间有效校准一次，之后每小时校准一次
+	if(rtcAdjInit == 0)
+	{
+		if(INS_EOK == rtc_gnss_adjust_time())
+		{
+			rtcAdjInit = 1;
+			rtc_update();
+			ucTimeOneSecondChangeHour = RSOFT_RTC_HOUR;
+		}
+	}
+	else
+	{
+	    if(ucTimeOneSecondChangeHour != RSOFT_RTC_HOUR)
+	    {
+	        ucTimeOneSecondChangeHour = RSOFT_RTC_HOUR;
+
+	        rtc_gnss_adjust_time();
+	    }
+    }
+}
+uint16_t rtc_update_flg = 0;
+void rtc_syn(void)
+{
+	if(rtc_update_flg > INS_TICK_PER_SECOND)
+	{
+		rtc_update_flg = 0;
+		rtc_update();
+	}
+}
+uint32_t val;
+uint32_t mcount=0;
+extern void lfs_selftest(void);
 int main(void)
 {
 
     prvSetupHardware();
     peripherals_init();
+    comm2_queue = CirQueueGenericCreate(GNSS_BUFFER_SIZE);
+    comm3_queue = CirQueueGenericCreate(GNSS_BUFFER_SIZE);
 //    fpga_dram_test();
 #ifdef configUse_debug
     dbg_periph_enable(DBG_FWDGT_HOLD);
     dbg_periph_enable(DBG_WWDGT_HOLD);
 #endif
 #ifdef INS_USING_UART4_DMA0
-    Public_SetTestTimer(comm_handle, 10);
+    //Public_SetTestTimer(comm_handle, 10);
 #endif
-	
+	//lfs_selftest();
     while(1)
     {
+    	SysTick->LOAD=0xfffff0;//时间加载(SysTick->LOAD为24bit)
+ 		SysTick->VAL   = 0;/* Load the SysTick Counter Value */
+  		SysTick->CTRL  = SysTick_CTRL_CLKSOURCE_Msk |
+                   SysTick_CTRL_TICKINT_Msk   |
+                   SysTick_CTRL_ENABLE_Msk;  
         gnss_comm2_task();
         gnss_comm3_task();
         imu_comm5_task();
         nav_task();
-        //comm_handle();
-        TimerTaskScheduler();
+        comm_handle();
+        adjust_rtc();
+        rtc_syn();
+        val = 0xfffff0 - SysTick->VAL;
+        mcount++;
+        if(mcount > 500000)
+        {
+        mcount = 0;
+        //Uart_SendMsg(UART_TXPORT_COMPLEX_8, 0, 4, (uint8_t*)&val);
+        }
+        SysTick->CTRL  &= ~SysTick_CTRL_ENABLE_Msk; 
+        //TimerTaskScheduler();
     }
 }
 

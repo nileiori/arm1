@@ -163,7 +163,7 @@ int GNSS_Cmd_Parser(char* pData)
     		||(0 == strncmp("$GPRMC", (char const *)pData, 6))
     		||(0 == strncmp("$GLRMC", (char const *)pData, 6)))
     {
-	    gnssSynFlg |= (0x1 << 0);
+	    //gnssSynFlg |= (0x1 << 0);
 	    gCmdTypeIndex = 1;
     }
     else if((0 == strncmp("$GNGGA", (char const *)pData, 6))
@@ -171,7 +171,7 @@ int GNSS_Cmd_Parser(char* pData)
     		||(0 == strncmp("$GLGGA", (char const *)pData, 6))
     		||(0 == strncmp("$BDGGA", (char const *)pData, 6)))
     {
-	    gnssSynFlg |= (0x1 << 1);
+	    //gnssSynFlg |= (0x1 << 1);
 	    gCmdTypeIndex = 2;
     }
     else if((0 == strncmp("$GNVTG", (char const *)pData, 6))
@@ -188,7 +188,7 @@ int GNSS_Cmd_Parser(char* pData)
     }
     else if(0 == strncmp("#HEADINGA", (char const *)pData, 9))
     {
-	    gnssSynFlg |= (0x1 << 2);
+	    //gnssSynFlg |= (0x1 << 0);
 	    gCmdTypeIndex = 5;
     }
     else if(0 == strncmp("#BESTPOSA", (char const *)pData, 9))
@@ -198,7 +198,7 @@ int GNSS_Cmd_Parser(char* pData)
     }
     else if(0 == strncmp("#BESTVELA", (char const *)pData, 9))
     {
-    	gnssSynFlg |= (0x1 << 3);
+    	//gnssSynFlg |= (0x1 << 4);
     	gCmdTypeIndex = 7;
     }
     else if((0 == strncmp("$GNTRA", (char const *)pData, 6))
@@ -209,7 +209,7 @@ int GNSS_Cmd_Parser(char* pData)
     }
     else if(0 == strncmp("#AGRICA", (char const *)pData, 7))
     {
-	    gnssSynFlg |= (0x1 << 4);
+	    gnssSynFlg |= (0x1 << 0);
 	    gCmdTypeIndex = 9;
     }
 	
@@ -1531,19 +1531,24 @@ void gnss_Fetch_Data(void)
 	hGPSData.StarNum = hGPSGgaData.numSatellitesUsed;
 	
 	hGPSData.PositioningState = hGPSRmcData.valid;
-	
-    hGPSData.ResolveState = hGPSHeadingData.calcState;
-	hGPSData.PositionType = hGPSHeadingData.posType;
-	hGPSData.VelType = hGPSBestVelData.velType;
+	//位置状态
+    hGPSData.ResolveState[0] = hGPSBestPosData.calcState;
+	hGPSData.PositionType[0] = hGPSBestPosData.posType;
+	//速度状态
+    hGPSData.ResolveState[1] = hGPSBestVelData.calcState;
+	hGPSData.PositionType[1] = hGPSBestVelData.velType;
+	//姿态状态
+    hGPSData.ResolveState[2] = hGPSHeadingData.calcState;
+	hGPSData.PositionType[2] = hGPSHeadingData.posType;
 	
     hGPSData.hdgstddev = hGPSHeadingData.courseStandardDeviation;
     hGPSData.ptchstddev = hGPSHeadingData.pitchStandardDeviation;
     
     
     hGPSData.LonHemisphere = hGPSRmcData.LonHemisphere;
-    hGPSData.Lon = hGPSRmcData.longitude;
+    hGPSData.Lon = hGPSAgricData.lon;
     hGPSData.LatHemisphere = hGPSRmcData.LatHemisphere;
-    hGPSData.Lat = hGPSRmcData.latitude;
+    hGPSData.Lat = hGPSAgricData.lat;
     hGPSData.Altitude = hGPSAgricData.alt;
     hGPSData.Heading = hGPSAgricData.Heading;
     hGPSData.Pitch = hGPSAgricData.pitch;
@@ -1660,7 +1665,7 @@ void gnss_fill_data(uint8_t* pData, uint16_t dataLen)
     if(INS_EOK == gnss_parse(pData, dataLen))
     {
         //gnss_fill_rs422(&rs422_frame);
-        if(0x1f == gnssSynFlg)
+        if(0x01 == gnssSynFlg)
         {
 	        gnssSynFlg = 0;
 	        gnss_Fetch_Data();
