@@ -275,7 +275,7 @@ typedef struct GPS_Data_t
 	float HDOP;							/* HDOP水平精度因子 0.5 - 99.9 */
 	float GroundSpeed;					/* 速度, 单位: m/s, 精度: 0.1*/
 	unsigned int	gpsweek;
-	float 		gpssecond;
+	uint32_t 		gpssecond;
 	float			ve;
 	float 		vn;
 	float			vu;

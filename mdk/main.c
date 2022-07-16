@@ -90,8 +90,8 @@ static uint8_t fpga_comm5_rxbuffer[IMU_BUFFER_SIZE];
 static uint16_t imu_comm5_len = 0;
 
 
-//static uint8_t comm2_fifo[GNSS_BUFFER_SIZE*2];
-//static uint8_t comm3_fifo[GNSS_BUFFER_SIZE*2];
+//static uint8_t comm2_fifo[GNSS_BUFFER_SIZE];
+//static uint8_t comm3_fifo[GNSS_BUFFER_SIZE];
 CirQueue_t comm2_queue;
 CirQueue_t comm3_queue;
 
@@ -249,6 +249,10 @@ void gnss_comm2_parse(uint8_t* pData, uint16_t dataLen)
                 gnss_comm2_parse_len++;
             }
         }
+        else
+        {
+			break;
+        }
     }
     while(1);
 }
@@ -308,6 +312,10 @@ void gnss_comm3_parse(uint8_t* pData, uint16_t dataLen)
                 fpga_comm3_parse_rxbuffer[gnss_comm3_parse_len] = temp;
                 gnss_comm3_parse_len++;
             }
+        }
+        else
+        {
+			break;
         }
     }
     while(1);
@@ -466,16 +474,17 @@ void rtc_syn(void)
         rtc_update();
     }
 }
-//uint32_t val;
-//uint32_t mcount=0;
+
 extern void lfs_selftest(void);
 int main(void)
 {
 
     prvSetupHardware();
     peripherals_init();
-    comm2_queue = CirQueueGenericCreate(GNSS_BUFFER_SIZE*2);
-    comm3_queue = CirQueueGenericCreate(GNSS_BUFFER_SIZE*2);
+    comm2_queue = CirQueueGenericCreate(GNSS_BUFFER_SIZE);
+    comm3_queue = CirQueueGenericCreate(GNSS_BUFFER_SIZE);
+    //comm2_queue = CirQueueStaticCreate(GNSS_BUFFER_SIZE, comm2_fifo);
+    //comm3_queue = CirQueueStaticCreate(GNSS_BUFFER_SIZE, comm3_fifo);
 //    fpga_dram_test();
 #ifdef configUse_debug
     dbg_periph_enable(DBG_FWDGT_HOLD);
@@ -487,11 +496,6 @@ int main(void)
     //lfs_selftest();
     while(1)
     {
-//        SysTick->LOAD=0xfffff0;//时间加载(SysTick->LOAD为24bit)
-//        SysTick->VAL   = 0;/* Load the SysTick Counter Value */
-//        SysTick->CTRL  = SysTick_CTRL_CLKSOURCE_Msk |
-//                         SysTick_CTRL_TICKINT_Msk   |
-//                         SysTick_CTRL_ENABLE_Msk;
         gnss_comm2_task();
         gnss_comm3_task();
         imu_comm5_task();
@@ -499,15 +503,7 @@ int main(void)
         comm_handle();
         adjust_rtc();
         rtc_syn();
-//        val = 0xfffff0 - SysTick->VAL;
-//        mcount++;
-//        if(mcount > 500000)
-//        {
-//            mcount = 0;
-//            //Uart_SendMsg(UART_TXPORT_COMPLEX_8, 0, 4, (uint8_t*)&val);
-//        }
-//        SysTick->CTRL  &= ~SysTick_CTRL_ENABLE_Msk;
-        //TimerTaskScheduler();
+
     }
 }
 

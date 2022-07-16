@@ -131,7 +131,8 @@ extern void Oscilloscope(void);
 void nav_task(void)
 {
 	static uint8_t nav_init = 0;
-
+	//static uint32_t last; 
+	//static uint32_t val; 
 	if(nav_init == 0)
 	{
 		nav_init = 1;
@@ -153,8 +154,11 @@ void nav_task(void)
     if(xGnssStatus)//GNSS数据
     {
         xGnssStatus = 0;
-        memcpy((void*)&combineData.gnssInfo.timestamp, (void*)&hGPSData.timestamp, sizeof(GPSDataTypeDef));
-        //Uart_SendMsg(UART_TXPORT_COMPLEX_8, 0, 4, (uint8_t*)&combineData.gnssInfo.timestamp);
+        memcpy((void*)&combineData.gnssInfo.timestamp, (void*)&hGPSData.timestamp, sizeof(GPSDataTypeDef));      
+        //val = hGPSData.gpssecond - last;
+        //last = hGPSData.gpssecond;
+        //Uart_SendMsg(UART_TXPORT_COMPLEX_8, 0, 4, (uint8_t*)&val);
+        //Uart_SendMsg(UART_TXPORT_COMPLEX_8, 0, 4, (uint8_t*)&combineData.gnssInfo.gpssecond);
         //gd32_usart_write((uint8_t*)&combineData.gnssInfo.timestamp, sizeof(GPSDataTypeDef));
     }
     if(xCommStatus)//串口发送至上位机

@@ -206,7 +206,7 @@ CirQueue_t CirQueueGenericCreate(const uint32_t uxQueueLength)
 	return pxCirQueue;
 }
 
-CirQueue_t CirQueueStaticCreate(const uint32_t uxQueueLength, uint8_t* psBuf)
+CirQueue_t CirQueueStaticCreate(const uint32_t uxQueueLength, uint8_t* pBuf)
 {
 	CirQueue_t pxCirQueue;
 
@@ -220,8 +220,8 @@ CirQueue_t CirQueueStaticCreate(const uint32_t uxQueueLength, uint8_t* psBuf)
 	pxCirQueue->queueLen = 0;
 	pxCirQueue->queueCapacity = uxQueueLength;
 
-	pxCirQueue->buff = psBuf;
-	
+	pxCirQueue->buff = pBuf;
+
 	return pxCirQueue;
 }
 

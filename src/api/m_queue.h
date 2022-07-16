@@ -120,7 +120,7 @@ uint32_t ByteDeCirQueue(uint8_t *pBuffer, CirQueue_t xCirQueue);
 *********************************************************************************************************/
 CirQueue_t CirQueueGenericCreate(const uint32_t uxQueueLength);
 
-CirQueue_t CirQueueStaticCreate(const uint32_t uxQueueLength, uint8_t* psBuf);
+CirQueue_t CirQueueStaticCreate(const uint32_t uxQueueLength, uint8_t* pBuf);
 
 #ifdef cplusplus
 }
