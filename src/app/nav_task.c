@@ -19,15 +19,8 @@
 #include "inavlog.h"
 
 
-//422
-//Uart_SendMsg(UART_TXPORT_COMPLEX_8, 0, imu_comm5_len, fpga_comm5_rxbuffer);
-//232 uart4
-//uint32_t gd32_usart_write(uint8_t *buffer, uint32_t size)
-
-uint8_t xImuStatus;
-uint8_t xGnssStatus;
-uint8_t xCommStatus;
-
+extern uint8_t xImuStatus;
+extern uint8_t xGnssStatus;
 
 CombineDataTypeDef combineData;
 
@@ -161,13 +154,7 @@ void nav_task(void)
         //Uart_SendMsg(UART_TXPORT_COMPLEX_8, 0, 4, (uint8_t*)&combineData.gnssInfo.gpssecond);
         //gd32_usart_write((uint8_t*)&combineData.gnssInfo.timestamp, sizeof(GPSDataTypeDef));
     }
-    if(xCommStatus)//串口发送至上位机
-    {
-        xCommStatus = 0;
-        frame_pack_and_send(&g_Export_Result, &hGPSData);
-        //frame_writeDram();
-        //Oscilloscope();
-    }
+    
 }
 
 #endif

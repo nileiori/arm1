@@ -1658,7 +1658,7 @@ uint8_t gnss_parse(uint8_t* pData, uint16_t dataLen)
 
     return ret;
 }
-
+extern uint8_t xGnssStatus;
 void gnss_fill_data(uint8_t* pData, uint16_t dataLen)
 {
 	

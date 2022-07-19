@@ -2,6 +2,9 @@
 #define ____COMPUTER_FRAME_PARSE_H____
 
 #include "gd32f4xx.h"
+#include "config.h"
+
+#define COMM_BUFFER_SIZE            	256
 
 #define FRAME_HEAD						0xAF55FA
 #define FrameHead_Index					2
@@ -143,9 +146,15 @@ extern AppSettingTypeDef hSetting;
 extern AppSettingTypeDef hDefaultSetting;
 
 uint8_t frame_setting_is_update(void);
-EventStatus usart_dispose_recvDataTask(void);
+void frameParse(uint8_t* pData, uint16_t len);
+#if (configUse_COMM == COMM_MODE_RS232)
 void comm_handle(void);
-
+EventStatus usart_dispose_recvDataTask(void);
+#endif
+#if (configUse_COMM == COMM_MODE_RS422)
+void rs422_comm1_rx(void);
+void rs422_comm1_task(void);
+#endif
 
 
 #endif // ____COMPUTER_FRAME_PARSE_H____

@@ -1,11 +1,15 @@
 #include "computerFrameParse.h"
 #include "data_convert.h"
 #include "serial.h"
+#include "uartadapter.h"
 
 #include "gnss.h"
 
-//INSDataTypeDef hINSData;
-//FPGA_FRAME_DEF hINSFPGAData;
+
+
+uint8_t xCommStatus;
+
+
 uint8_t fpga_data_read_flag;
 AppSettingTypeDef hSetting;
 AppSettingTypeDef hDefaultSetting;
@@ -20,9 +24,11 @@ void comm_send_end_frame(uint16_t cmd)
     frameEnd[3] = cmd;
     frameEnd[4] = 0x00;
     frameEnd[5] = 0xFF;
-
+#if (configUse_COMM == COMM_MODE_RS422)
+	Uart_SendMsg(UART_TXPORT_COMPLEX_8, 0, 6, frameEnd);
+#elif (configUse_COMM == COMM_MODE_RS232)
     gd32_usart_write(frameEnd, 6);
-
+#endif
 }
 uint8_t frame_setting_is_update(void)
 {
@@ -223,7 +229,7 @@ void frameParse(uint8_t* pData, uint16_t len)
 
     comm_send_end_frame(tCmd);
 }
-
+#if (configUse_COMM == COMM_MODE_RS232)
 static struct
 {
     uint8_t  usart_rx_buffer[USART_SERIAL_RB_BUFSZ];
@@ -279,5 +285,42 @@ EventStatus usart_dispose_recvDataTask(void)
 
     return ENABLE;
 }
+
+#endif
+#if (configUse_COMM == COMM_MODE_RS422)
+#include "nav_task.h"
+
+static uint8_t fpga_comm1_rxbuffer[COMM_BUFFER_SIZE];
+static uint16_t rs422_comm1_len = 0;
+
+void rs422_comm1_rx(void)
+{
+
+    rs422_comm1_len = Uart_RecvMsg(UART_RXPORT_COMPLEX_8, COMM_BUFFER_SIZE, fpga_comm1_rxbuffer);
+    if(rs422_comm1_len)
+    {
+        xCommStatus = 2;
+    }
+}
+extern EXPORT_RESULT  g_Export_Result;
+void rs422_comm1_task(void)
+{
+    if(2 == xCommStatus)//解析上位机数据
+    {
+    	xCommStatus = 0;
+        frameParse(fpga_comm1_rxbuffer, rs422_comm1_len);
+    }
+    else if(1 == xCommStatus)//串口发送至上位机
+    {
+        xCommStatus = 0;
+        frame_pack_and_send(&g_Export_Result, &hGPSData);
+        //frame_writeDram();
+        //Oscilloscope();
+    }     
+     
+}
+
+#endif
+
 
 

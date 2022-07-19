@@ -71,10 +71,6 @@ typedef struct
     GPSDataTypeDef			gnssInfo;
 } CombineDataTypeDef;
 
-COMMON_EXT uint8_t xImuStatus;
-COMMON_EXT uint8_t xGnssStatus;
-COMMON_EXT uint8_t xCommStatus;
-
 
 void nav_task(void);
 
